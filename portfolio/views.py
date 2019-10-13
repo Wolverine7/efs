@@ -5,6 +5,11 @@ from django.utils import timezone
 from django.shortcuts import render, get_object_or_404
 from django.shortcuts import redirect
 from django.contrib.auth.decorators import login_required
+from django.db.models import Sum
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .serializers import CustomerSerializer
 
 
 now = timezone.now()
@@ -140,3 +145,63 @@ def investment_delete(request, pk):
     investment = get_object_or_404(Investment, pk=pk)
     investment.delete()
     return redirect('portfolio:investment_list')
+
+@login_required
+def portfolio(request, pk):
+    customer = get_object_or_404(Customer, pk=pk)
+    customers = Customer.objects.filter(created_date__lte=timezone.now())
+    investments = Investment.objects.filter(customer=pk)
+    stocks = Stock.objects.filter(customer=pk)
+    sum_recent_value = Investment.objects.filter(customer=pk).aggregate(Sum('recent_value'))
+    sum_acquired_value = Investment.objects.filter(customer=pk).aggregate(Sum('acquired_value'))
+    # overall_investment_results = sum_recent_value-sum_acquired_value
+    # Initialize the value of the stocks
+    sum_current_stocks_value = 0
+    sum_of_initial_stock_value = 0
+    result = 0
+    overall_initial = 0
+    overall_current = 0
+    result_investment = 0
+    recent_value = 0
+    acquired_value = 0
+    grand_total = 0
+    recent_value=sum_recent_value['recent_value__sum']
+    acquired_value = sum_acquired_value['acquired_value__sum']
+
+    result_investment = recent_value - acquired_value
+    print()
+
+
+    #Loop through each stock and add value the value to the total
+    for stock in stocks:
+        stock.shares
+        sum_current_stocks_value += stock.current_stock_value()
+        sum_of_initial_stock_value += stock.initial_stock_value()
+        result = float(sum_current_stocks_value) - float(sum_of_initial_stock_value)
+        overall_initial = sum_of_initial_stock_value + sum_acquired_value['acquired_value__sum']
+        overall_current = float(sum_current_stocks_value) + float(sum_recent_value['recent_value__sum'])
+        grand_total = float(overall_current)-float(overall_initial)
+
+
+    return render(request, 'portfolio/portfolio.html',{'customers': customers,
+                                                       'investments': investments,
+                                                       'stocks': stocks,
+                                                       'sum_acquired_value': sum_acquired_value['acquired_value__sum'],
+                                                       'sum_recent_value': sum_recent_value['recent_value__sum'],
+                                                       'sum_current_stocks_value': sum_current_stocks_value,
+                                                       'sum_of_initial_stock_value': sum_of_initial_stock_value,
+                                                       'result': result,
+                                                       'result_investment': result_investment,
+                                                       'overall_initial': overall_initial,
+                                                       'overall_current': overall_current,
+                                                       'grand_total': grand_total,
+                                                       'recent_value': recent_value,
+                                                       'acquired_value': acquired_value})
+
+# List at the end of the views.py
+# Lists all customers
+class CustomerList(APIView):
+    def get(self,request):
+        customers_json = Customer.objects.all()
+        serializer = CustomerSerializer(customers_json, many=True)
+        return Response(serializer.data)
