@@ -1,0 +1,27 @@
+{% extends "portfolio/base.html" %}
+
+{% block content %}
+
+
+{% if error %}
+    {{ error }}
+    <br /><br />
+{% endif %}
+<br /><br />
+
+                <form action="" class="form-group" method="POST" action="{% url 'register' %}">
+                     {% csrf_token %}
+                     <label for="username">Username: </label>
+                     <input type="text" name="username" class="form-control">
+                     <label for="password">Password: </label>
+                     <input type="password" name="password1" class="form-control">
+                     <label for="password">Confirm Password: </label>
+                     <input type="password" name="password2" class="form-control">
+
+                    <br />
+                     <input class="btn btn-dark button1" type="submit" value="Register" />
+                </form>
+
+
+
+{% endblock %}
