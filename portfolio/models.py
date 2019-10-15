@@ -4,6 +4,8 @@ from django.contrib.auth.models import User
 import requests
 import json
 from django.core.cache import cache
+import datetime
+
 
 # Create your models here.
 class Customer(models.Model):
